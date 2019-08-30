@@ -40,3 +40,7 @@ To demonstrate the app, follow the steps:
    (http://www.cypress.com/CYW920819EVB-02)
 
 -------------------------------------------------------------------------------
+
+Edited - 8/30/2019
+
+Edited by MFR 8/30/2019

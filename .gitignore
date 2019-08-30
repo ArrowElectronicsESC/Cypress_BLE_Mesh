@@ -53,6 +53,7 @@ dkms.conf
 
 # omitting Debug and Build folder
 Debug/
+libraries/
 .externalToolBuilders/
 .settings/
 20819/
@@ -61,6 +62,7 @@ GeneratedSource/
 *.cproject
 *.project
 *.cycompdb
+
 *makefile.init
 
 
