@@ -50,3 +50,17 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# omitting Debug and Build folder
+Debug/
+.externalToolBuilders/
+.settings/
+20819/
+bt_sdk-1.1/
+GeneratedSource/
+*.cproject
+*.project
+*.cycompdb
+*makefile.init
+
+
