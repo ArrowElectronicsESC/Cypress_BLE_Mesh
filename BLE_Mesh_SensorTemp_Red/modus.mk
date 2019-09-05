@@ -40,9 +40,9 @@ PLATFORMS_VERSION = 1.0
 
 CONFIG = Debug
 
-CY_EXAMPLE_NAME = BLE_Mesh_SensorTemperature
+CY_EXAMPLE_NAME = BLE_Mesh_SensorTemp_Red
 
-CY_EXAMPLE_DESCRIPTION = This demo application shows a BLE Mesh Temperature Sensor implementation, based on the Sensor Server model.
+CY_EXAMPLE_DESCRIPTION = This demo application shows a BLE Mesh Temperature Sensor implementation and a Red Light Sensor, based on the Sensor Server model.
 
 CY_SHOW_NEW_PROJECT := true
 
@@ -115,6 +115,12 @@ endif # PTS
 
 CY_APP_SOURCE =  \
   ./sensor_temperature.c \
+  ./AD7798.c\
+  ./AD7798.h\
+  ./cn0397.h\
+  ./cn0397.c\
+  ./SPI_Comm.c\
+   ./SPI_Comm.h\
   ./readme.txt
 
 CY_APP_RESOURCES =
