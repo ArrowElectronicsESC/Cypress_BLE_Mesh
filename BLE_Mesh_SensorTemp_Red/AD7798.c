@@ -45,8 +45,8 @@
 /******************************************************************************/
 #include "SPI_Comm.h"		// Communication definitions.
 #include "AD7798.h"			// AD7798 definitions.
-#include "wiced_rtos.h"
-#include "wiced_bt_trace.h"
+#include "wiced_rtos.h"		// RTOS definitions - used for delay
+//#include "wiced_bt_trace.h" // For Debug UART, if needed
 
 
 /***************************************************************************//**
@@ -86,6 +86,7 @@ void AD7798_Reset(void)
 	 wiced_rtos_delay_milliseconds(10,ALLOW_THREAD_TO_SLEEP);
 
 }
+
 /***************************************************************************//**
  * @brief Reads the value of the selected register
  *

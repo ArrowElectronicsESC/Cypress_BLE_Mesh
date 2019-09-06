@@ -33,17 +33,21 @@
 
 /** @file
  *
- * This demo application shows a  implementation of a temperature sensor.
+ * This demo application shows a implementation of a temperature sensor and
+ * read the red light sensor on the Analog Devices CNO397 RGB light Sensor Arduino Shield.
  * The app is based on the snip/mesh/mesh_sensor_server sample which
  * implements BLE Mesh Sensor Server model.
  *
  * Features demonstrated
  *  - Temperature measurement using the on board Thermistor on the EVK
+ *  - Adding a 2nd sensor element, the Red Light Sensor on the Arduino Shield
  *
  * To demonstrate the app, walk through the following steps.
  * 1. Build and download the application (to the WICED board)
- * 2. Use Android MeshController and provision the temperature sensor
- * 3. After successful provisioning, user can use the Android MeshController/Mesh Client to configure the below parameters of the sensor
+ * 2. Use Android or iOS MeshController app  and provision the temperature sensor
+ * 3. After successful provisioning, user can use the Android  or iOS MeshController/Mesh Client
+ *    to configure the below parameters of the sensor
+ *
  *    a> configure sensor to publish the sensor data to a specific group or to all-nodes.
  *    b> configure publish period : publish period defines how often the user wants the sensor to publish the data.
  *    c> set cadence of the sensor :
@@ -118,8 +122,7 @@ extern wiced_bt_cfg_settings_t wiced_bt_cfg_settings;
 
 #define MESH_RED_SENSOR_CADENCE_VSID	          		WICED_NVRAM_VSID_START + 0x100
 
-/*SPI 1 defines*/
-
+/*SPI 1 defines to interface to ADI CN0397 Arduino Shield */
 #define CLK_1                                 WICED_P09
 #define MISO_1                                WICED_P17
 #define MOSI_1                                WICED_P06
@@ -131,6 +134,7 @@ extern wiced_bt_cfg_settings_t wiced_bt_cfg_settings;
 /* SPI register configuration macro*/
 #define GPIO_CFG(CS_1,CLK_1,MOSI_1,MISO_1)    ((((UINT32)CS_1&0xff)<<24)|((UINT32)CLK_1&0xff)<<16)|(((UINT32)MOSI_1&0xff)<<8)|((UINT32)MISO_1)
 
+/* Color Sensor Channel Defines */
 #define RED  	1
 #define GREEN 	0
 #define BLUE	2
@@ -154,7 +158,9 @@ static void         mesh_sensor_server_send_status(wiced_bt_mesh_event_t *p_even
 static void         mesh_sensor_server_process_cadence_changed(uint8_t element_idx, uint16_t property_id);
 static void         mesh_sensor_server_process_setting_changed(uint8_t element_idx, uint16_t property_id, uint16_t setting_property_id);
 static int8_t       mesh_sensor_get_temperature_8(void);
+/* publish timer for Temperature sensor */
 static void         mesh_sensor_publish_timer_callback(TIMER_PARAM_TYPE arg);
+/* publish timer for Red Light sensor */
 static void 		mesh_red_sensor_publish_timer_callback(TIMER_PARAM_TYPE arg);
 static void         mesh_sensor_server_enter_hid_off(uint32_t timeout_ms);
 
@@ -180,10 +186,10 @@ uint32_t      mesh_sensor_fast_publish_period = 0;  // publish period in msec wh
 uint32_t      mesh_sensor_sleep_timeout = 0;        // timeout value in msec that is currently running
 wiced_timer_t mesh_sensor_cadence_timer;
 
-// Present Red Sensor property
+/* Present Red Sensor property */
 uint32_t      mesh_light_sensor_current_value;
 uint8_t       mesh_red_sensor_current_value[3];
-uint8_t       mesh_red_sensor_sent_value[3] = {0,0,0};          	//
+uint8_t       mesh_red_sensor_sent_value[3] = {0,0,0};  // Ambient Light Sensor Element required 3 octets
 uint32_t      mesh_red_sensor_sent_time;                // time stamp when temperature was published
 uint32_t      mesh_red_sensor_publish_period = 0;       // publish period in msec
 uint32_t      mesh_red_sensor_fast_publish_period = 0;  // publish period in msec when values are outside of limit
@@ -193,11 +199,11 @@ wiced_timer_t mesh_light_sensor_cadence_timer;
 // Optional setting for the temperature sensor, the Total Device Runtime, in Time Hour 24 format
 uint8_t mesh_temperature_sensor_setting0_val[] = { 0x01, 0x00, 0x00 };
 
-uint16_t      	mesh_sensor_red_sensor = 0; 				// lux	//
+uint16_t      	mesh_sensor_red_sensor = 0; 		// lux
 uint16_t        mesh_sensor_green_sensor = 0; 		// lux
 uint16_t        mesh_sensor_blue_sensor = 0; 		// lux
 
-uint8_t		button_state =1;
+//uint8_t		button_state =1;
 
 wiced_bt_mesh_core_config_model_t mesh_element1_models[] =
 {
@@ -928,8 +934,8 @@ void mesh_red_sensor_publish_timer_callback(TIMER_PARAM_TYPE arg)
                 // if cadence high is more than cadence low, to publish, the value should be in range
                 if (p_sensor->cadence.fast_cadence_high >= p_sensor->cadence.fast_cadence_low)
                 {
-                    if ((mesh_red_sensor_current_value >= p_sensor->cadence.fast_cadence_low) &&
-                        (mesh_red_sensor_current_value <= p_sensor->cadence.fast_cadence_high))
+                    if ((mesh_red_sensor_current_value[0] >= p_sensor->cadence.fast_cadence_low) &&
+                        (mesh_red_sensor_current_value[0] <= p_sensor->cadence.fast_cadence_high))
                     {
                         WICED_BT_TRACE("Pub needed in range\n");
                         pub_needed = WICED_TRUE;
@@ -937,8 +943,8 @@ void mesh_red_sensor_publish_timer_callback(TIMER_PARAM_TYPE arg)
                 }
                 else if (p_sensor->cadence.fast_cadence_high < p_sensor->cadence.fast_cadence_low)
                 {
-                    if ((mesh_red_sensor_current_value > p_sensor->cadence.fast_cadence_low) ||
-                        (mesh_red_sensor_current_value < p_sensor->cadence.fast_cadence_high))
+                    if ((mesh_red_sensor_current_value[0] > p_sensor->cadence.fast_cadence_low) ||
+                        (mesh_red_sensor_current_value[0] < p_sensor->cadence.fast_cadence_high))
                     {
                         WICED_BT_TRACE("Pub needed out of range\n");
                         pub_needed = WICED_TRUE;
