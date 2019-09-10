@@ -152,16 +152,20 @@ static wiced_bool_t mesh_app_notify_period_set(uint8_t element_idx, uint16_t com
 static void         mesh_app_lpn_sleep(uint32_t timeout);
 static void         mesh_app_factory_reset(void);
 static void         mesh_sensor_server_restart_timer(wiced_bt_mesh_core_config_sensor_t *p_sensor);
-static void         mesh_sensor_server_report_handler(uint16_t event, uint8_t element_idx, void *p_get_data, void *p_ref_data);
+static void         mesh_temp_sensor_server_report_handler(uint16_t event, uint8_t element_idx, void *p_get_data, void *p_ref_data);
+static void         mesh_red_sensor_server_report_handler(uint16_t event, uint8_t element_idx, void *p_get_data, void *p_ref_data);
 static void         mesh_sensor_server_config_change_handler(uint8_t element_idx, uint16_t event, uint16_t property_id, uint16_t setting_property_id);
 static void         mesh_sensor_server_send_status(wiced_bt_mesh_event_t *p_event, uint16_t property_id);
 static void         mesh_sensor_server_process_cadence_changed(uint8_t element_idx, uint16_t property_id);
 static void         mesh_sensor_server_process_setting_changed(uint8_t element_idx, uint16_t property_id, uint16_t setting_property_id);
 static int8_t       mesh_sensor_get_temperature_8(void);
+
 /* publish timer for Temperature sensor */
 static void         mesh_sensor_publish_timer_callback(TIMER_PARAM_TYPE arg);
+
 /* publish timer for Red Light sensor */
 static void 		mesh_red_sensor_publish_timer_callback(TIMER_PARAM_TYPE arg);
+
 static void         mesh_sensor_server_enter_hid_off(uint32_t timeout_ms);
 
 #ifdef HCI_CONTROL
@@ -274,7 +278,7 @@ wiced_bt_mesh_core_config_sensor_t mesh_element2_sensors[] =
         .cadence =
         {
             // Value 0 indicates that cadence does not change depending on the measurements
-            .fast_cadence_period_divisor = 64,          // Recommended publish period is 320sec, 64 will make fast period 5sec
+            .fast_cadence_period_divisor = 32,          // Recommended publish period is 320sec, 32 will make fast period 10sec
             .trigger_type_percentage     = WICED_FALSE, // The Property is Bool, does not make sense to use percentage
             .trigger_delta_down          = 0,           // This will not cause message when presence changes from 1 to 0
             .trigger_delta_up            = 1,           // This will cause immediate message when presence changes from 0 to 1
@@ -291,7 +295,6 @@ wiced_bt_mesh_core_config_sensor_t mesh_element2_sensors[] =
     },
 };
 
-
 #define MESH_SENSOR_SERVER_ELEMENT_INDEX    0
 #define MESH_TEMPERATURE_SENSOR_INDEX       0
 #define MESH_RED_SENSOR_INDEX      			1
@@ -301,6 +304,14 @@ wiced_bt_mesh_core_config_model_t   mesh_element2_models[] =
 		WICED_BT_MESH_MODEL_SENSOR_SERVER,
 };
 #define MESH_APP_NUM_MODELS_RED  (sizeof(mesh_element2_models) / sizeof(wiced_bt_mesh_core_config_model_t))
+
+/* for future additions of green and blue sensors */
+
+//wiced_bt_mesh_core_config_model_t   mesh_element3_models[] =
+//{
+//		WICED_BT_MESH_MODEL_SENSOR_SERVER,
+//};
+
 //#define MESH_APP_NUM_MODELS_GREEN  (sizeof(mesh_element3_models) / sizeof(wiced_bt_mesh_core_config_model_t))
 //
 //wiced_bt_mesh_core_config_model_t   mesh_element3_models[] =
@@ -467,6 +478,15 @@ void mesh_app_init(wiced_bool_t is_provisioned)
     mesh_prop_fw_version[6] = 0x30 + (WICED_SDK_BUILD_NUMBER / 10);
     mesh_prop_fw_version[7] = 0x30 + (WICED_SDK_BUILD_NUMBER % 10);
 
+    if (!is_provisioned)
+        return;
+
+    // When we are coming out of HID OFF and if we are provisioned, need to send data
+
+    thermistor_init();
+
+     // read the initial temperature
+    mesh_sensor_current_temperature = mesh_sensor_get_temperature_8();
 
     /* Init the SPI Hardware - MSB First and Mode 3 are required for the CN0397 */
 
@@ -480,16 +500,6 @@ void mesh_app_init(wiced_bool_t is_provisioned)
                         SPI_MODE_3,
                         CS_1);
 
-
-    if (!is_provisioned)
-        return;
-
-    // When we are coming out of HID OFF and if we are provisioned, need to send data
-
-    thermistor_init();
-
-     // read the initial temperature
-    mesh_sensor_current_temperature = mesh_sensor_get_temperature_8();
 
     /* Init the Light Sensoer Shield -*/
     CN0397_Init();
@@ -517,16 +527,25 @@ void mesh_app_init(wiced_bool_t is_provisioned)
     //restore the cadence from NVRAM
     wiced_hal_read_nvram(MESH_RED_SENSOR_CADENCE_VSID, sizeof(wiced_bt_mesh_sensor_config_cadence_t), (uint8_t*)(&p_red_sensor->cadence), &result);
 
-    wiced_bt_mesh_model_sensor_server_init(MESH_SENSOR_SERVER_ELEMENT_INDEX, mesh_sensor_server_report_handler, mesh_sensor_server_config_change_handler, is_provisioned);
-    wiced_bt_mesh_model_sensor_server_init(MESH_RED_SENSOR_INDEX, mesh_sensor_server_report_handler, mesh_sensor_server_config_change_handler, is_provisioned);
+    // init the 2 sensor servers - temp and red light sensor
+    wiced_bt_mesh_model_sensor_server_init(MESH_TEMPERATURE_SENSOR_INDEX , mesh_temp_sensor_server_report_handler, mesh_sensor_server_config_change_handler, is_provisioned);
+    wiced_bt_mesh_model_sensor_server_init(MESH_RED_SENSOR_INDEX, mesh_red_sensor_server_report_handler, mesh_sensor_server_config_change_handler, is_provisioned);
 
     mesh_sensor_sent_value = mesh_sensor_current_temperature;
     mesh_sensor_sent_time  = cur_time;
 
+    // init the sensor server data */
     WICED_BT_TRACE("Pub value:%d time:%d\n", mesh_sensor_sent_value, mesh_sensor_sent_time);
     wiced_bt_mesh_model_sensor_server_data(MESH_SENSOR_SERVER_ELEMENT_INDEX, WICED_BT_MESH_PROPERTY_PRESENT_AMBIENT_TEMPERATURE, NULL);
-    wiced_bt_mesh_model_sensor_server_data(MESH_RED_SENSOR_INDEX, WICED_BT_MESH_PROPERTY_PRESENT_AMBIENT_LIGHT_LEVEL , NULL);
 
+    // Measure the light sensor and update it to mesh config
+    CN0397_ReadData(RED, &mesh_sensor_red_sensor, &mesh_sensor_green_sensor, &mesh_sensor_blue_sensor);
+    mesh_light_sensor_current_value = mesh_sensor_red_sensor * 10000;
+   /* format data to send */
+    mesh_red_sensor_sent_value[0] = (uint8_t)( (mesh_light_sensor_current_value>> 16) & 0xFF);
+    mesh_red_sensor_sent_value[1] = (uint8_t)(( mesh_light_sensor_current_value>> 8) & 0xFF);;
+    mesh_red_sensor_sent_value[2] = (uint8_t)( mesh_light_sensor_current_value &0xFF);
+    wiced_bt_mesh_model_sensor_server_data(MESH_RED_SENSOR_INDEX, WICED_BT_MESH_PROPERTY_PRESENT_AMBIENT_LIGHT_LEVEL , NULL);
 }
 
 /*
@@ -674,7 +693,7 @@ void mesh_sensor_server_config_change_handler(uint8_t element_idx, uint16_t even
 /*
  * Process get request from Sensor Client and respond with sensor data
  */
-void mesh_sensor_server_report_handler(uint16_t event, uint8_t element_idx, void *p_get, void *p_ref_data)
+void mesh_temp_sensor_server_report_handler(uint16_t event, uint8_t element_idx, void *p_get, void *p_ref_data)
 {
     wiced_bt_mesh_sensor_get_t *p_sensor_get = (wiced_bt_mesh_sensor_get_t *)p_get;
     WICED_BT_TRACE("mesh_sensor_server_report_handler msg: %d\n", event);
@@ -685,23 +704,46 @@ void mesh_sensor_server_report_handler(uint16_t event, uint8_t element_idx, void
         // measure the temperature and update it to mesh_config
         mesh_sensor_sent_value = mesh_sensor_get_temperature_8();
 
+        // tell mesh models library that data is ready to be shipped out, the library will get data from mesh_config
+        wiced_bt_mesh_model_sensor_server_data(element_idx, p_sensor_get->property_id, p_ref_data);
+
+        break;
+
+    case WICED_BT_MESH_SENSOR_COLUMN_GET:
+        break;
+
+    case WICED_BT_MESH_SENSOR_SERIES_GET:
+        break;
+
+    default:
+        WICED_BT_TRACE("unknown\n");
+        break;
+    }
+}
+
+void mesh_red_sensor_server_report_handler(uint16_t event, uint8_t element_idx, void *p_get, void *p_ref_data)
+{
+    wiced_bt_mesh_sensor_get_t *p_sensor_get = (wiced_bt_mesh_sensor_get_t *)p_get;
+    WICED_BT_TRACE("mesh_sensor_server_report_handler msg: %d\n", event);
+
+    switch (event)
+    {
+    case WICED_BT_MESH_SENSOR_GET:
+
         // Measure the light sensor and update it to mesh config
         CN0397_ReadData(RED, &mesh_sensor_red_sensor, &mesh_sensor_green_sensor, &mesh_sensor_blue_sensor);
         mesh_light_sensor_current_value = mesh_sensor_red_sensor * 10000;
 
-       WICED_BT_TRACE("Light sensor value: %x\n\r", mesh_light_sensor_current_value);
+ //      WICED_BT_TRACE("Light sensor value: %x\n\r", mesh_light_sensor_current_value);
 
   //      CN0397_DisplayData();
-
+       /* format data to send */
         mesh_red_sensor_sent_value[0] = (uint8_t)( (mesh_light_sensor_current_value>> 16) & 0xFF);
         mesh_red_sensor_sent_value[1] = (uint8_t)(( mesh_light_sensor_current_value>> 8) & 0xFF);;
         mesh_red_sensor_sent_value[2] = (uint8_t)( mesh_light_sensor_current_value &0xFF);
 
-        WICED_BT_TRACE("sent value: %x %x %X \n\r", mesh_red_sensor_sent_value[2], mesh_red_sensor_sent_value[1], mesh_red_sensor_sent_value[0]);
-
         // tell mesh models library that data is ready to be shipped out, the library will get data from mesh_config
         wiced_bt_mesh_model_sensor_server_data(element_idx, p_sensor_get->property_id, p_ref_data);
-
 
         break;
 
