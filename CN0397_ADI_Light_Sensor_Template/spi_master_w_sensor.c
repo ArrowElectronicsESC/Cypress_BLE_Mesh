@@ -125,8 +125,6 @@ typedef enum
 
 static wiced_thread_t       *spi_1;
 
-//static wiced_semaphore_t    *sem;
-
 static uint8_t button_state;
 
 /******************************************************************************
