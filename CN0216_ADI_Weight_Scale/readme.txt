@@ -13,8 +13,8 @@ Instructions to evaluate the project
 ---------------------------
 To demonstrate the app, follow the steps:
 1. Plug the CN0216 onto the Arduino connectors on the CYW920819EVB-02
-2. Add a jumper witre on CN0216 - 5V to VIN on the Arduino Power Connector
-3. Move the Jumper on Pxx to the 1st position
+2. Add a jumper wire on CN0216 - 5V to VIN on the Arduino Power Connector
+3. Move the Jumper on Pxx to the 1st position (CS = D10)
 4. Plug the two WICED evaluation kits into your computer.
 5. Build and download the application CN0216 Weight Scale" to thekit a
 6. Use a terminal emulation tool such as Tera Term to open the serial port
