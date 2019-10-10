@@ -33,7 +33,8 @@
 
 /** File name: spi_master_w_sensor.c
  *
- * WICED sample application for SPI master running SPI instance fpr am Arduimo Shield
+ * WICED sample application for SPI master running SPI instance for am  the
+ * ADI CNB216 Precision Weight Scale Design Arduimo Shield
  *
  * This application demonstrates how to use SPI driver interface to connect to an
  * Arduino shield with a SPI sensor
