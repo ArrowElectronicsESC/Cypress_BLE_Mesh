@@ -38,6 +38,28 @@ To demonstrate the app, follow the steps:
    For more details on the hardware connections in the CYW920819EVB-02 Evaluation
    kit, please refer to the ModusToolbox CYW920819EVB-02 Evaluation Kit User Guide.pdf
    (http://www.cypress.com/CYW920819EVB-02)
+   
+   CODE FOR TEMPLATE PROJECT
+   
+ 	/*SPI 1 defines*/
+
+	#define CLK_1                                 WICED_P09
+	#define MISO_1                                WICED_P17
+	#define MOSI_1                                WICED_P06
+	#define CS_1                                  WICED_P15
+   
+	/* SPI Init */   
+       wiced_hal_pspi_init(SPI1,
+                        SPI_MASTER,
+                        INPUT_PIN_PULL_UP,
+                        GPIO_CFG(CS_1,CLK_1,MOSI_1,MISO_1),
+                        DEFAULT_FREQUENCY,
+                        SPI_MSB_FIRST,
+                        SPI_SS_ACTIVE_LOW,
+                        SPI_MODE_3,
+                        CS_1);
+ 
+                        
 
 -------------------------------------------------------------------------------
 

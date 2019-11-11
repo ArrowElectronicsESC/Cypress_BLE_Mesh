@@ -80,6 +80,7 @@
 #define PRIORITY_MEDIUM                       (5)
 #define PRIORITY_LOW                          (7)
 
+// TODO -- replace Pxx with the proger pin locations from Platform
 /*SPI 1 defines*/
 
 #define CLK_1                                 WICED_Pxx		// replace with correct Platform Pin #)
@@ -222,6 +223,7 @@ void initialize_app( void )
 
     	button_state =  wiced_hal_gpio_get_pin_input_status(WICED_GPIO_PIN_BUTTON_1);
 
+    // TODO -- add SPI Hardware Initialization here
     /* Init the SPI Hardware - MSB First and Mode 3 are required for the CN0397 */
 
 
