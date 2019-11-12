@@ -40,7 +40,7 @@
  *
  * Features demonstrated:
  * - SPI WICED APIs
- * - SPI Drivers for the ADI CN0397 Light Sensor Evaul Board
+ * - SPI Drivers for the ADI CN0397 Light Sensor Eval Board
  * - WICED RTOS APIs
  *
  * Hardware Connections:
@@ -67,6 +67,8 @@
 #include "wiced_rtos.h"
 #include "wiced_bt_stack.h"
 #include "wiced_rtc.h"
+
+//TODO -- add .h files for spi hal and CN0397 arduino shield
 
 
 /******************************************************************************

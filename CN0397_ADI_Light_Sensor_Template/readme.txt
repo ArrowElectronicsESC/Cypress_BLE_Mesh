@@ -1,6 +1,6 @@
--------------------------------------------------------------------------------
+--------------------------------------------------
 CN0397 ADI Light Sensor Arduino Shield Application
--------------------------------------------------------------------------------
+---------------------------------------------------
 
 Overview
 --------
@@ -38,8 +38,15 @@ To demonstrate the app, follow the steps:
    For more details on the hardware connections in the CYW920819EVB-02 Evaluation
    kit, please refer to the ModusToolbox CYW920819EVB-02 Evaluation Kit User Guide.pdf
    (http://www.cypress.com/CYW920819EVB-02)
-   
+   --------------------------------------------------------------
+      
    CODE FOR TEMPLATE PROJECT
+   ------------------------------------------
+   
+   include files
+   #include "wiced_hal_gpio.h"
+   #include "wiced_hal_pspi.h"
+   #include "cn0397.h"
    
  	/*SPI 1 defines*/
 
@@ -58,11 +65,11 @@ To demonstrate the app, follow the steps:
                         SPI_SS_ACTIVE_LOW,
                         SPI_MODE_3,
                         CS_1);
- 
-                        
+                      
 
 -------------------------------------------------------------------------------
 
 Edited - 8/30/2019
 
-Edited by MFR 8/30/2019
+Edited by MFR 8/30/2019   -- original release 
+Edited by MFR 11/11/2019  -- add template code

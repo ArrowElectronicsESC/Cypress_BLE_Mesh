@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
-BLE Mesh Sensor Temperature application
+BLE Mesh Sensor Temperature and Light (red content) sensorapplication
 -------------------------------------------------------------------------------
 
 Overview
@@ -8,8 +8,8 @@ This demo application shows an implementation of a BLE Mesh temperature sensor.
 The app is based on the BLE Mesh Sensor Server model.
 
 Features demonstrated
-- Temperature measurement using the on board Thermistor on the CYBT-213043-MESH EZ-BT Mesh Evaluation Kit
-  / CYW920819EVB-02 Evaluation Kit
+- Temperature measurement using the on board Thermistor CYW920819EVB-02 Evaluation Kit
+- Red Light Sensor on the Analog Devices CN0397 RGB Light sensor Arduino Shield 
 - Usage of BLE Mesh Sensor Server model
 
 See chip specific readme for more information about the BT SDK.
@@ -17,8 +17,7 @@ See chip specific readme for more information about the BT SDK.
 Instructions
 ------------
 To demonstrate the app, work through the following steps.
-1. Build and download the application to the CYBT-213043-MESH EZ-BT Mesh Evaluation Kit
-   / CYW920819EVB-02 Evaluation Kit
+1. Build and download the application to CYW920819EVB-02 Evaluation Kit
 2. Use Android MeshController or Windows Mesh Client and provision the temperature sensor
 3. After successful provisioning, use the Android MeshController/ Windows Mesh
    Client to configure the below parameters of the sensor
@@ -56,7 +55,5 @@ MESH_PROVISIONER_DEBUG_TRACES
    Turn on debug trace from Mesh Provisioner library
 REMOTE_PROVISION_SRV
    Enable device as Remote Provisioning Server
-LOW_POWER_NODE
-   Enable device as Low Power Node
 
 -------------------------------------------------------------------------------
