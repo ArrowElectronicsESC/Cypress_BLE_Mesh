@@ -44,7 +44,7 @@ To demonstrate the app, follow the steps:
    ------------------------------------------
    
    include files
-   #include "wiced_hal_gpio.h"
+  
    #include "wiced_hal_pspi.h"
    #include "cn0397.h"
    
@@ -65,11 +65,17 @@ To demonstrate the app, follow the steps:
                         SPI_SS_ACTIVE_LOW,
                         SPI_MODE_3,
                         CS_1);
-                      
 
+    /* Init CN0397 and read ID */
+        	CN0397_Init();                        
+  
+  /* Read the data from from the CN0397 and Display the data */                    
+        	CN0397_SetAppData();
+        	CN0397_DisplayData();
 -------------------------------------------------------------------------------
 
 Edited - 8/30/2019
 
 Edited by MFR 8/30/2019   -- original release 
 Edited by MFR 11/11/2019  -- add template code
+Edited by MFR 11/20/2019  -- add the CN0397 calls 
