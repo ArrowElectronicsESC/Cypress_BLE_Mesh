@@ -33,7 +33,8 @@
 
 /** File name: spi_master_w_sensor.c
  *
- * WICED sample application for SPI master running SPI instance fpr am Arduimo Shield
+ * WICED sample application for SPI master running SPI instance for am  the
+ * ADI CNB216 Precision Weight Scale Design Arduimo Shield
  *
  * This application demonstrates how to use SPI driver interface to connect to an
  * Arduino shield with a SPI sensor
@@ -70,7 +71,7 @@
 #include "wiced_rtc.h"
 #include "wiced_hal_sflash.h"
 #include "wiced_hal_nvram.h"
-#include "cn0397.h"
+#include "cn0216.h"
 
 
 /******************************************************************************
@@ -84,39 +85,81 @@
 #define PRIORITY_MEDIUM                       (5)
 #define PRIORITY_LOW                          (7)
 
-/*SPI 1 defines*/
-
-#define CLK_1                                 WICED_P09
-#define MISO_1                                WICED_P17
-#define MOSI_1                                WICED_P06
-#define CS_1                                  WICED_P15
-
-/* 1 MHz frequency*/
-#define DEFAULT_FREQUENCY                     (1000000u)
-
-/* SPI register configuration macro*/
-#define GPIO_CFG(CS_1,CLK_1,MOSI_1,MISO_1)    ((((UINT32)CS_1&0xff)<<24)|((UINT32)CLK_1&0xff)<<16)|(((UINT32)MOSI_1&0xff)<<8)|((UINT32)MISO_1)
+///*SPI 1 defines*/
+//
+//#define CLK_1                                 WICED_P09
+//#define MISO_1                                WICED_P17
+//#define MOSI_1                                WICED_P06
+//#define CS_1                                  WICED_P15
+//
+///* 1 MHz frequency*/
+//#define DEFAULT_FREQUENCY                     (1000000u)
+//
+///* SPI register configuration macro*/
+//#define GPIO_CFG(CS_1,CLK_1,MOSI_1,MISO_1)    ((((UINT32)CS_1&0xff)<<24)|((UINT32)CLK_1&0xff)<<16)|(((UINT32)MOSI_1&0xff)<<8)|((UINT32)MISO_1)
 
 #define SLEEP_TIMEOUT                         (1000)
+
 /* Delay between transmitting and receiving SPI messages from sensor, to prevent reading earlier responses.*/
 #define TX_RX_TIMEOUT                         (50)
+
+//  Weigh Scale Variables
+uint16_t ui16calibrationWeight = 1000;	  //value is in units (grams)
+
+// AD7791 variables
+uint32_t ui32Adcdata = 0;
+
+// Main program variables
+float fgramsPerCode = 0.0;
+float fWeight = 0.0;
+float fzeroScaleCalibration = 0.0;
+float ffullScaleCalibration = 0.0;
 
 
 /******************************************************************************
  *                                Structures
  ******************************************************************************/
 
+/* pSPI data packet*/
+typedef struct
+{
+    uint16_t data ;
+    uint16_t header;
+}data_packet;
+
+/*Temperature record structure stored in sflash*/
+typedef struct
+{
+    uint16_t record_no;
+    uint8_t dec_temp;
+    uint8_t frac_temp;
+    wiced_rtc_time_t timestamp;
+}temperature_record;
+
+/* Enumeration listing SPI sensor commands
+ * GET_MANUFACTURER_ID: Command to get Manufacturer ID.
+ * GET_UNIT: Command to get unit scale.
+ * MEASURE_TEMPERATURE: Command to get temperature reading.*/
+typedef enum
+{
+    GET_MANUFACTURER_ID = 1,
+    GET_UNIT,
+    MEASURE_TEMPERATURE
+}sensor_cmd;
 
 /* Enumeration listing SPI Master states
- * SENSOR_INIT:   SPI Master initializes the RGB Sensor and sets the state to
- * 				  read data.
- * READ_AD7798	: Master reads the senosr data and sends it to the Debug UART
- *
- */
+ * SENSOR_DETECT: Master checks for presence of SLAVE by verifying received
+ *                packet header and obtains response to Manufacturer ID on
+ *                verification.
+ * GET_UNIT: Master checks for presence of SLAVE by verifying received packet
+ *           header and obtains response to Unit ID on verification.
+ * GET_TEMPERATURE: Master checks for presence of SLAVE by verifying received
+ *                  packet header and obtains response to Temperature reading on
+ *                  verification.*/
 typedef enum
 {
     SENSOR_INIT,
-    READ_AD7798,
+    READ_AD7791,
     }master_state;
 
 /******************************************************************************
@@ -125,7 +168,7 @@ typedef enum
 
 static wiced_thread_t       *spi_1;
 
-//static wiced_semaphore_t    *sem;
+static wiced_semaphore_t    *sem;
 
 static uint8_t button_state;
 
@@ -219,30 +262,18 @@ void initialize_app( void )
     uint16_t        record = 0;
 
 
-    WICED_BT_TRACE("\r\n\tCN0397 ADI Light Sensor Demo\r\n");
+    WICED_BT_TRACE("\r\n CN0216 ADI Weight Sensor Demo\r\n");
 
     wiced_hal_gpio_configure_pin( WICED_GPIO_PIN_BUTTON_1,
                                   GPIO_PULL_UP,
                                   GPIO_PIN_OUTPUT_HIGH);
 
 
-    	button_state =  wiced_hal_gpio_get_pin_input_status(WICED_GPIO_PIN_BUTTON_1);
+ //   button_state =  wiced_hal_gpio_get_pin_input_status(WICED_GPIO_PIN_BUTTON_1);
 
 
     /* Initialize RTC. RTC by default is set to the time 00:00:00 Hrs, January 1, 2010.*/
     wiced_rtc_init();
-
-    /* Init the SPI Hardware - MSB First and Mode 3 are required for the CN0397 */
-
-    wiced_hal_pspi_init(SPI1,
-                        SPI_MASTER,
-                        INPUT_PIN_PULL_UP,
-                        GPIO_CFG(CS_1,CLK_1,MOSI_1,MISO_1),
-                        DEFAULT_FREQUENCY,
-                        SPI_MSB_FIRST,
-                        SPI_SS_ACTIVE_LOW,
-                        SPI_MODE_3,
-                        CS_1);
 
     wiced_rtos_delay_milliseconds(50,ALLOW_THREAD_TO_SLEEP);
 
@@ -254,7 +285,7 @@ void initialize_app( void )
                                                  THREAD_STACK_MIN_SIZE,
                                                  NULL ) )
     {
-        WICED_BT_TRACE( "SPI Sensor thread created\n\r" );
+        WICED_BT_TRACE( " SPI Sensor thread created\n\r" );
     }
     else
     {
@@ -277,7 +308,12 @@ void initialize_app( void )
 
 void spi_sensor_thread(uint32_t arg )
 {
+    wiced_result_t result;
+    uint32_t count;
+    temperature_record sampled_temp;
     master_state curr_state = SENSOR_INIT;
+    uint32_t	loop_count;
+    uint8_t calibrated = 0;
 
     while(WICED_TRUE)
     {
@@ -286,17 +322,32 @@ void spi_sensor_thread(uint32_t arg )
         case SENSOR_INIT:
 
             /* Init CN0397 and read ID */
-        	CN0397_Init();
+        	Ad7791INIT();
+        	loop_count = 0;
+        	wiced_rtos_delay_milliseconds(100,ALLOW_THREAD_TO_SLEEP);
+        	if (!calibrated)
+        	{
+        		Ad7791_Calibration();
+        		calibrated = 1;
 
-        	curr_state = READ_AD7798;
+        	}
+
+        	curr_state = READ_AD7791;
 
             break;
 
-        case READ_AD7798:
+        case READ_AD7791:
 
-        	CN0397_SetAppData();
-        	CN0397_DisplayData();
+        	fWeight = getWeight();
+
+        	WICED_BT_TRACE(" Weight = %d grams \r\n", (uint32_t) fWeight);
+
         	wiced_rtos_delay_milliseconds(500,ALLOW_THREAD_TO_SLEEP);
+        	loop_count++;
+        	if (loop_count> 511)
+        	{
+        		curr_state = SENSOR_INIT;
+        	}
 
             break;
 

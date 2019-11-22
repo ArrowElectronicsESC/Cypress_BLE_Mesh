@@ -1,5 +1,5 @@
 # This is a file used and owned by the ModusToolbox IDE. Users should not modify this file.
-FEATURE_VALUES=BT_DEVICE_ADDRESS,default UART,AUTO ENABLE_DEBUG,0 POWER_ESTIMATOR,no 
+FEATURE_VALUES=BT_DEVICE_ADDRESS,default UART,AUTO ENABLE_DEBUG,0 POWER_ESTIMATOR,no MESH_MODELS_DEBUG_TRACES,off MESH_CORE_DEBUG_TRACES,off MESH_PROVISIONER_DEBUG_TRACES,off REMOTE_PROVISION_SRV,0 LOW_POWER_NODE,0 
 DEVICE=CYW20819A1KFBG
 #
 # Copyright 2019, Cypress Semiconductor Corporation or a subsidiary of
@@ -33,39 +33,89 @@ DEVICE=CYW20819A1KFBG
 # of such system or application assumes all risk of such use and in doing
 # so agrees to indemnify Cypress against all liability.
 #
+
 TOOLCHAIN=GCC
 
 PLATFORMS_VERSION = 1.0
 
 CONFIG = Debug
 
-CY_EXAMPLE_NAME = CN0397_ADI_Light_Sensor_Arduino_shield
+CY_EXAMPLE_NAME = BLE_Mesh_SensorTemperature
 
-CY_EXAMPLE_DESCRIPTION = This application communicates to an ADI CN0397 Light Senor Arduino shield and displays data on a TeraTerm or Putty window
+CY_EXAMPLE_DESCRIPTION = This demo application shows a BLE Mesh Temperature Sensor implementation, based on the Sensor Server model.
+
 CY_SHOW_NEW_PROJECT := true
 
-CY_VALID_PLATFORMS = CYW920819EVB-02
+CY_VALID_PLATFORMS =  \
+  CYW920819EVB-02 \
+  CYW920820EVB-02 \
+  CYBT-213043-MESH
+
 PLATFORM=CYW920819EVB-02
 
-CY_APP_DEFINES += -DWICED_BT_TRACE_ENABLE
+# to link to mesh libraries with tracing enabled, use the following settings:
+# Note: 20706 can only have 1 enabled, more than one will exceed memory limits
+MESH_MODELS_DEBUG_TRACES_DEFAULT=off
+MESH_CORE_DEBUG_TRACES_DEFAULT=off
+MESH_PROVISIONER_DEBUG_TRACES_DEFAULT=off
+
+APP_FEATURES += \
+	MESH_MODELS_DEBUG_TRACES,app,onoff,$(MESH_MODELS_DEBUG_TRACES_DEFAULT) \
+	MESH_CORE_DEBUG_TRACES,app,onoff,$(MESH_CORE_DEBUG_TRACES_DEFAULT) \
+	MESH_PROVISIONER_DEBUG_TRACES,app,onoff,$(MESH_PROVISIONER_DEBUG_TRACES_DEFAULT)
+
+MESH_MODELS_DEBUG_TRACES ?= $(MESH_MODELS_DEBUG_TRACES_DEFAULT)
+MESH_CORE_DEBUG_TRACES ?= $(MESH_CORE_DEBUG_TRACES_DEFAULT)
+MESH_PROVISIONER_DEBUG_TRACES ?= $(MESH_PROVISIONER_DEBUG_TRACES_DEFAULT)
+
+CY_MAINAPP_SWCOMP_RULES +=  \
+  $(CY_WICED_LIB_COMP_BASE)/BT-SDK/common/libraries/mesh_app_lib \
+
+# OTAFU enabled by default for all mesh apps
+OTA_FW_UPGRADE = 1
+
+# NOTE: This variable cannot be renamed or moved to a different file. It is updated by the ModusToolbox
+# middleware editor.
+CY_MAINAPP_SWCOMP_USED =  \
+  $(CY_WICED_LIB_COMP_BASE)/BT-SDK/common/libraries/fw_upgrade_lib
+
+ifeq ($(PLATFORM),CYBT-213043-MESH)
+CY_MAINAPP_SWCOMP_USED +=  \
+  $(CY_WICED_LIB_COMP_BASE)/BT-SDK/common/libraries/thermistor_ncp15xv103_lib
+else
+CY_MAINAPP_SWCOMP_USED +=  \
+  $(CY_WICED_LIB_COMP_BASE)/BT-SDK/common/libraries/thermistor_ncu15wf104_lib
+endif # PLATFORM
 
 # NOTE: This variable cannot be renamed or moved to a different file. It is updated by the ModusToolbox
 # middleware editor.
 CY_MAINAPP_SWCOMP_EXT =
 
-CY_APP_SOURCE = \
-  ./spi_master_w_sensor.c \
-  ./AD7798.c\
-  ./AD7798.h\
-  ./cn0397.h\
-  ./cn0397.c\
-  ./SPI_Comm.c\
-   ./SPI_Comm.h\
-  ./readme.txt
+CY_APP_DEFINES =  \
+  -DWICED_BT_TRACE_ENABLE \
+  -DHCI_CONTROL
 
-# if app needs to use custom design.modus, define path here, needs to match same structure
-# as main app but under components not examples
-# CY_APP_COMPONENT_PATH_BASE := 208XX-A1_Bluetooth/apps/demo/datalogger/dual_spi_master
+APP_FEATURES += REMOTE_PROVISION_SRV,app,enum,0,0,1
+REMOTE_PROVISION_SRV ?= 0
+ifeq ($(REMOTE_PROVISION_SRV),1)
+CY_APP_DEFINES += -DREMOTE_PROVISIONG_SERVER_SUPPORTED
+endif
+
+# value of the LOW_POWER_NODE defines mode. It can be normal node (0), or low power node (1)
+APP_FEATURES += LOW_POWER_NODE,app,enum,0,0,1
+LOW_POWER_NODE ?= 0
+CY_APP_DEFINES += -DLOW_POWER_NODE=$(LOW_POWER_NODE)
+
+# If PTS is defined then device gets hardcoded BD address from make target
+# Otherwise it is random
+PTS ?= 0
+ifeq ($(PTS),1)
+CY_APP_DEFINES += -DPTS
+endif # PTS
+
+CY_APP_SOURCE =  \
+  ./sensor_temperature.c \
+  ./readme.txt
 
 CY_APP_RESOURCES =
 

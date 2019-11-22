@@ -39,9 +39,9 @@ PLATFORMS_VERSION = 1.0
 
 CONFIG = Debug
 
-CY_EXAMPLE_NAME = CN0397_ADI_Light_Sensor_Arduino_shield
+CY_EXAMPLE_NAME = CN0216_Weight_Scale
 
-CY_EXAMPLE_DESCRIPTION = This application communicates to an ADI CN0397 Light Senor Arduino shield and displays data on a TeraTerm or Putty window
+CY_EXAMPLE_DESCRIPTION = This application demonstrates the ADI CN0216 Arduino Shield 
 CY_SHOW_NEW_PROJECT := true
 
 CY_VALID_PLATFORMS = CYW920819EVB-02
@@ -55,17 +55,15 @@ CY_MAINAPP_SWCOMP_EXT =
 
 CY_APP_SOURCE = \
   ./spi_master_w_sensor.c \
-  ./AD7798.c\
-  ./AD7798.h\
-  ./cn0397.h\
-  ./cn0397.c\
+   ./cn0216.h\
+  ./cn0216.c\
   ./SPI_Comm.c\
-   ./SPI_Comm.h\
+  ./SPI_Comm.h\
   ./readme.txt
 
 # if app needs to use custom design.modus, define path here, needs to match same structure
 # as main app but under components not examples
-# CY_APP_COMPONENT_PATH_BASE := 208XX-A1_Bluetooth/apps/demo/datalogger/dual_spi_master
+#CY_APP_COMPONENT_PATH_BASE := 208XX-A1_Bluetooth/apps/demo/datalogger/dual_spi_master
 
 CY_APP_RESOURCES =
 

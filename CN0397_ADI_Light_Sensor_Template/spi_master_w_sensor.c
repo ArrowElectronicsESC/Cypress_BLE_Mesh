@@ -40,7 +40,7 @@
  *
  * Features demonstrated:
  * - SPI WICED APIs
- * - SPI Drivers for the ADI CN0397 Light Sensor Evaul Board
+ * - SPI Drivers for the ADI CN0397 Light Sensor Eval Board
  * - WICED RTOS APIs
  *
  * Hardware Connections:
@@ -63,14 +63,12 @@
 #include "wiced_bt_trace.h"
 #include "wiced_hal_gpio.h"
 #include "wiced_platform.h"
-#include "wiced_hal_pspi.h"
 #include "wiced_hal_puart.h"
 #include "wiced_rtos.h"
 #include "wiced_bt_stack.h"
 #include "wiced_rtc.h"
-#include "wiced_hal_sflash.h"
-#include "wiced_hal_nvram.h"
-#include "cn0397.h"
+
+//TODO -- add .h files for spi hal and CN0397 arduino shield
 
 
 /******************************************************************************
@@ -84,12 +82,13 @@
 #define PRIORITY_MEDIUM                       (5)
 #define PRIORITY_LOW                          (7)
 
+// TODO -- replace Pxx with the proger pin locations from Platform
 /*SPI 1 defines*/
 
-#define CLK_1                                 WICED_P09
-#define MISO_1                                WICED_P17
-#define MOSI_1                                WICED_P06
-#define CS_1                                  WICED_P15
+#define CLK_1                                 WICED_Pxx		// replace with correct Platform Pin #)
+#define MISO_1                                WICED_Pxx		// replace with correct Platform Pin #)
+#define MOSI_1                                WICED_Pxx		// replace with correct Platform Pin #)
+#define CS_1                                  WICED_Pxx		// replace with correct Platform Pin #)
 
 /* 1 MHz frequency*/
 #define DEFAULT_FREQUENCY                     (1000000u)
@@ -124,8 +123,6 @@ typedef enum
  ******************************************************************************/
 
 static wiced_thread_t       *spi_1;
-
-//static wiced_semaphore_t    *sem;
 
 static uint8_t button_state;
 
@@ -228,21 +225,9 @@ void initialize_app( void )
 
     	button_state =  wiced_hal_gpio_get_pin_input_status(WICED_GPIO_PIN_BUTTON_1);
 
-
-    /* Initialize RTC. RTC by default is set to the time 00:00:00 Hrs, January 1, 2010.*/
-    wiced_rtc_init();
-
+    // TODO -- add SPI Hardware Initialization here
     /* Init the SPI Hardware - MSB First and Mode 3 are required for the CN0397 */
 
-    wiced_hal_pspi_init(SPI1,
-                        SPI_MASTER,
-                        INPUT_PIN_PULL_UP,
-                        GPIO_CFG(CS_1,CLK_1,MOSI_1,MISO_1),
-                        DEFAULT_FREQUENCY,
-                        SPI_MSB_FIRST,
-                        SPI_SS_ACTIVE_LOW,
-                        SPI_MODE_3,
-                        CS_1);
 
     wiced_rtos_delay_milliseconds(50,ALLOW_THREAD_TO_SLEEP);
 
@@ -286,7 +271,7 @@ void spi_sensor_thread(uint32_t arg )
         case SENSOR_INIT:
 
             /* Init CN0397 and read ID */
-        	CN0397_Init();
+
 
         	curr_state = READ_AD7798;
 
@@ -294,8 +279,8 @@ void spi_sensor_thread(uint32_t arg )
 
         case READ_AD7798:
 
-        	CN0397_SetAppData();
-        	CN0397_DisplayData();
+        	/* Read the data from from the CN0397 and Display the data */
+
         	wiced_rtos_delay_milliseconds(500,ALLOW_THREAD_TO_SLEEP);
 
             break;
