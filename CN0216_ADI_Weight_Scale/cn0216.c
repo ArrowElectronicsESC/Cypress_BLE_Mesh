@@ -213,7 +213,7 @@ void writeAd7791 (uint8_t ui8address, uint8_t ui8value)
 
 	else
 	{
-		spi_sensor_write(4, &reset_command);
+		spi_sensor_write(4, reset_command);
 
 		WICED_BT_TRACE(" Reset Command \r\n");			//Debug serial prints
 	}
