@@ -46,8 +46,8 @@
 #include "SPI_Comm.h"
 #include "wiced_hal_gpio.h"
 #include "wiced_hal_pspi.h"
-#include "wiced_rtos.h"
-#include "wiced_bt_trace.h"
+//#include "wiced_rtos.h"		// required if you want to add an RTOS delay
+//#include "wiced_bt_trace.h"	// required for debug printing
 
 /*******************************************************************************
 * Function Name: void spi_sensor_write(uint8_t byteCount, uint8_t *send_msg)

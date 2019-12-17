@@ -147,12 +147,8 @@ void AD7798_SetRegisterValue(uint8_t regAddress, uint16_t regValue,
          mask = mask >> (byte * 8);
 	   }
 
+
 	spi_sensor_write(size+1, &data[0]);
-
-
-
-
-
 
 
 }
@@ -167,7 +163,9 @@ void AD7798_SetRegisterValue(uint8_t regAddress, uint16_t regValue,
 unsigned char AD7798_Ready(void)
 {
 
-    while((AD7798_GetRegisterValue( AD7798_REG_STAT,1) & 0x80) != 0x80);
+    while((AD7798_GetRegisterValue( AD7798_REG_STAT,1) & 0x80) != 0x80)
+    	{
+    	};
 
 	return(1);
 }
@@ -179,14 +177,17 @@ unsigned char AD7798_Ready(void)
  *
  * @return  None.
 *******************************************************************************/
-void AD7798_SetMode(unsigned long mode, uint8_t refresh_rate)
+void AD7798_SetMode(unsigned long mode)
 {
     unsigned long command;
     command = AD7798_GetRegisterValue(AD7798_REG_MODE,2);
-    command = (command & 0xFFFFFF00) | refresh_rate;
     command &= ~AD7798_MODE_SEL(0xFF);
     command |= AD7798_MODE_SEL(mode);
-    AD7798_SetRegisterValue(AD7798_REG_MODE, command, 2);
+    AD7798_SetRegisterValue(
+            AD7798_REG_MODE,
+            command,
+            2
+    );
 }
 /***************************************************************************//**
  * @brief Selects the channel of AD7798.
@@ -201,7 +202,11 @@ void AD7798_SetChannel(unsigned long channel)
     command = AD7798_GetRegisterValue(AD7798_REG_CONF,2);
     command &= ~AD7798_CONF_CHAN(0xFF);
     command |= AD7798_CONF_CHAN(channel);
-    AD7798_SetRegisterValue(AD7798_REG_CONF, command, 2);
+    AD7798_SetRegisterValue(
+            AD7798_REG_CONF,
+            command,
+            2
+    );
 }
 
 /***************************************************************************//**

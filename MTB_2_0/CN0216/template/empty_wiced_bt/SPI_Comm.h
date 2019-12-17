@@ -66,7 +66,7 @@ typedef enum {
 
 /*************************** Functions prototypes *****************************/
 
-extern void SPI_Write(unsigned char* data, unsigned char bytesNumber);
+extern void spi_sensor_write(uint8_t byteCount, uint8_t *rec_msg);
 extern void spi_sensor_read(uint8_t byteCount, uint8_t *rec_msg);
 
 extern uint8_t convFlag;

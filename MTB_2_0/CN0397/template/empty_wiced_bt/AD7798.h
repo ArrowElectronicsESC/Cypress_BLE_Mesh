@@ -111,25 +111,6 @@ extern "C" {
 #define AD7798_GAIN_64      6
 #define AD7798_GAIN_128     7
 
-/* Filter update rate */
-
-#define AD7798__FS_470		0x01		// fadc = 470 Hz    s ettle time = 4 ms
-#define AD7798__FS_241		0x02		// fadc = 241 Hz -   settle time = 8 ms
-#define AD7798__FS_123		0x03		// fadc = 123 Hz -   settle time = 16 ms
-#define AD7798__FS_62		0x04		// fadc = 62 Hz -    settle time = 32 ms
-#define AD7798__FS_50		0x05		// fadc = 50 Hz -    settle time = 40 ms
-#define AD7798__FS_39		0x06		// fadc = 39 Hz -    settle time = 48 ms
-#define AD7798__FS_33_2		0x07		// fadc = 33.2 Hz -  settle time = 60 ms
-#define AD7798__FS_19_6		0x08		// fadc = 19.6 Hz -  settle time = 101 ms
-#define AD7798__FS_16_7		0x09		// fadc = 16.7 Hz -  settle time = 120 ms
-#define AD7798__FS_16_7_1	0x0A		// fadc = 16.7 Hz -  settle time = 120 ms
-#define AD7798__FS_12_5		0x0B		// fadc = 12.5 Hz -  settle time = 160 ms
-#define AD7798__FS_10		0x0C		// fadc = 10 Hz -    settle time = 200 ms
-#define AD7798__FS_8_3		0x0D		// fadc = 8.3 Hz -   settle time = 240 ms
-#define AD7798__FS_6_25		0x0E		// fadc = 6.25 Hz -  settle time = 320 ms
-#define AD7798__FS_4_17		0x0F		// fadc = 4.17 Hz -  settle time = 480 ms
-
-
 /* AD7798_CONF_REFDET(x) options */
 #define AD7798_REFDET_ENA   1
 #define AD7798_REFDET_DIS   0
@@ -172,7 +153,7 @@ uint16_t AD7798_GetRegisterValue(unsigned char regAddress, unsigned char size);
 /* Writes a value to the register. */
 void AD7798_SetRegisterValue(uint8_t regAddress, uint16_t regValue, uint8_t size);
 /* Sets the operating mode of AD7798. */
-void AD7798_SetMode(unsigned long mode, uint8_t refresh_rate);
+void AD7798_SetMode(unsigned long mode);
 /* Reads /RDY bit of Status register. */
 unsigned char AD7798_Ready(void);
 /* Selects the channel of AD7798. */

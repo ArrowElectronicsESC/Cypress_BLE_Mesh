@@ -1,6 +1,6 @@
 // ./../../../wiced_btsdk/dev-kit/baselib/20819A1/make/scripts/wiced-gen-lib-installer.pl
 // args: 
-// output: C:/Users/A62584/mtw2_0/CN0397/template/empty_wiced_bt/build/CYW920819EVB-02/generated/lib_installer.c
+// output: C:/Users/A62584/mtb_2_0_Mesh_Workshop/CN0397/template/empty_wiced_bt/build/CYW920819EVB-02/generated/lib_installer.c
 #include <stdint.h>
 typedef struct tag_PATCH_TABLE_ENTRY_t {
 	uint32_t breakout;

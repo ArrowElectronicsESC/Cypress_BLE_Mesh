@@ -61,7 +61,6 @@ static uint8_t	button_status;
 
 #define CHANNELS  3
 
-
 #define V_REF                3150.0    // [mV]
 #define _2_16                65535.0   // 2^16
 
@@ -71,11 +70,9 @@ extern void CN0397_ReadADCData(uint8_t adcChannel, uint16_t *adcData);
 extern void CN0397_ConvertToVoltage(uint16_t adcValue, float *voltage);
 extern void CN0397_CalcLightIntensity(uint8_t channel, uint16_t adcValue, float *intensity);
 extern void CN0397_CalcLightConcentration(uint8_t channel, float intensity, float *conc);
-extern void CN0397_SetAppData(uint8_t channel);
+extern void CN0397_SetAppData(void);
 extern void CN0397_Calibration(uint8_t channel);
 extern void CN0397_SetBar(float conc, int *line);
-
-extern void CN0397_ReadCData(uint16_t *red_sensor, uint16_t *green_sensor, uint16_t *blue_sensor);
 
 /* Available settings:
  *  AD7798_GAIN_1, AD7798_GAIN_2,
@@ -88,6 +85,7 @@ extern void CN0397_ReadCData(uint16_t *red_sensor, uint16_t *green_sensor, uint1
  * Check available value from datasheet
  */
 #define ADC_SPS        0x05  //50SPS
+
 
 /* Available settings:
  * How often to display output values on terminal -> msec

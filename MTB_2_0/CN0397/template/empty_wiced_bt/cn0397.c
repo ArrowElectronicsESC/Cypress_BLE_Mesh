@@ -52,9 +52,8 @@
 #include "wiced_rtos.h"
 #include "wiced_platform.h"
 
-#define RED  	0
-#define GREEN 	1
-#define BLUE	2
+uint8_t button_state = 1;
+
 
 uint8_t statusReg, idReg, ioReg, gainAdc;
 uint16_t modeReg, configReg, offsetReg, fullscaleReg, dataReg;
@@ -62,7 +61,6 @@ uint8_t convFlag;
 
 uint16_t adcValue[3];
 float voltageValue[3], intensityValue[3], lightConcentration[3];
-
 
 int barLine[3];
 
@@ -105,11 +103,11 @@ void CN0397_DisplayData(void)
 	   WICED_BT_TRACE("\n\r");
 
 
-//	   for(channel = 0; channel < CHANNELS; channel++){
-//
-//		   WICED_BT_TRACE(" Light Concentration = %d \t", (uint32_t)(lightConcentration[channel]*1000));
-//	   }
-//	   WICED_BT_TRACE("\n\r");
+	   for(channel = 0; channel < CHANNELS; channel++){
+
+		   WICED_BT_TRACE(" Light Concentration = %d \t", (uint32_t)(lightConcentration[channel]*1000));
+	   }
+	   WICED_BT_TRACE("\n\r");
 
 }
 
@@ -129,7 +127,7 @@ void CN0397_ReadADCData(uint8_t adcChannel, uint16_t *adcData)
 
    while((AD7798_GetRegisterValue( AD7798_REG_STAT,1) & channel) != channel);
 
-   wiced_rtos_delay_milliseconds(150,ALLOW_THREAD_TO_SLEEP);
+   wiced_rtos_delay_milliseconds(200,ALLOW_THREAD_TO_SLEEP);
 
    *adcData = AD7798_GetRegisterValue(AD7798_REG_DATA,2);
 
@@ -155,7 +153,7 @@ void CN0397_Init(void)
    if(AD7798_Init()){
 
          AD7798_SetCodingMode(AD7798_UNIPOLAR);
-         AD7798_SetMode(AD7798_MODE_SINGLE,AD7798__FS_123);	// Single conversion Update Rate 50Hz
+         AD7798_SetMode(AD7798_MODE_SINGLE);
          AD7798_SetGain(ADC_GAIN);
          AD7798_SetFilter(ADC_SPS);
          AD7798_SetReference(AD7798_REFDET_ENA);
@@ -166,11 +164,26 @@ void CN0397_Init(void)
    gainAdc = Gain[ADC_GAIN];
 
 #if(USE_CALIBRATION == YES)
+   WICED_BT_TRACE("Calibrate the system \r\n");
+
 
    for(channel = 0; channel < CHANNELS; channel++){
 
+	   WICED_BT_TRACE ("Calibrate %s channel be sure that %s photodiode is covered ", colour[channel],colour[channel]);
+
+	   WICED_BT_TRACE("Depress SW3 to continue\r\n");
+
+	   button_state =  wiced_hal_gpio_get_pin_input_status(WICED_GPIO_PIN_BUTTON_1);
+
+	   while (button_state)
+	   {
+		   button_state =  wiced_hal_gpio_get_pin_input_status(WICED_GPIO_PIN_BUTTON_1);
+		   wiced_rtos_delay_milliseconds(100,ALLOW_THREAD_TO_SLEEP);
+
+	   }
 	   CN0397_Calibration(Channels[channel]);
 	   WICED_BT_TRACE("Channel %s is calibrated!\r\n",colour[channel] );
+	   wiced_rtos_delay_milliseconds(500,ALLOW_THREAD_TO_SLEEP);
 
    }
    WICED_BT_TRACE("System calibration complete!\r\n");
@@ -192,20 +205,24 @@ void CN0397_CalcLightConcentration(uint8_t channel, float intensity, float *conc
 
 }
 
-void CN0397_SetAppData(uint8_t channel)
+void CN0397_SetAppData(void)
 {
- 	 uint8_t rgbChannel;
+   uint8_t channel, rgbChannel;
 
-    rgbChannel = Channels[channel];
+   for(channel = 0; channel < CHANNELS; channel++){
 
-    AD7798_SetChannel(channel);
+      rgbChannel = Channels[channel];
 
-    CN0397_ReadADCData(channel, &adcValue[rgbChannel]);
-    CN0397_ConvertToVoltage(adcValue[rgbChannel], &voltageValue[rgbChannel]);
-    CN0397_CalcLightIntensity(rgbChannel, adcValue[rgbChannel], &intensityValue[rgbChannel]);
- //   CN0397_CalcLightConcentration(rgbChannel, intensityValue[rgbChannel], &lightConcentration[rgbChannel]);
- //   CN0397_SetBar(lightConcentration[rgbChannel], &barLine[rgbChannel]);
- }
+      AD7798_SetChannel(channel);
+
+      CN0397_ReadADCData(channel, &adcValue[rgbChannel]);
+      CN0397_ConvertToVoltage(adcValue[rgbChannel], &voltageValue[rgbChannel]);
+      CN0397_CalcLightIntensity(rgbChannel, adcValue[rgbChannel], &intensityValue[rgbChannel]);
+      CN0397_CalcLightConcentration(rgbChannel, intensityValue[rgbChannel], &lightConcentration[rgbChannel]);
+      CN0397_SetBar(lightConcentration[rgbChannel], &barLine[rgbChannel]);
+
+   }
+}
 
 void CN0397_Calibration(uint8_t channel)
 {
@@ -247,30 +264,6 @@ void CN0397_SetBar(float conc, int *line)
    }
 
 }
-
-
-void CN0397_ReadData(uint8_t color, uint16_t *red_sensor, uint16_t *green_sensor, uint16_t *blue_sensor)
-{
-	CN0397_SetAppData(color);
-
-	switch (color)
-	{
-		case RED:
-			*red_sensor = (uint16_t)intensityValue[RED];
-
-			break;
-
-		case GREEN:
-			*green_sensor = (uint16_t)intensityValue[GREEN];
-			break;
-
-		case BLUE:
-			*blue_sensor = (uint16_t)intensityValue[BLUE];
-			break;
-	}
-
-}
-
 
 
 
