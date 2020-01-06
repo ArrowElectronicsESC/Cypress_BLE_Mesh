@@ -54,7 +54,7 @@
 #include <math.h>
 
 
-#define	CALIBRATE	0
+#define	CALIBRATE	1
 
 /*SPI 1 defines*/
 #define CLK_1                                 WICED_P09
