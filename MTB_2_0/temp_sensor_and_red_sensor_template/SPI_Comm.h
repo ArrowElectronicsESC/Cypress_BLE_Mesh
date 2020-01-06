@@ -1,6 +1,6 @@
 /**
 ******************************************************************************
-*   @file     CN0397.h
+*   @file     Communication.h
 *   @brief    Header file for communication part
 *   @version  V0.1
 *   @author   ADI
@@ -41,62 +41,42 @@
 *
 *******************************************************************************
 **/
-#ifndef CN0397_H_
-#define CN0397_H_
+#ifndef _SPI_COMM_H_
+#define __SPI_COMM_H_
+
+
+#include "stdint.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "AD7798.h"
-
-static uint8_t	button_status;
+/********************************* Internal defines ****************************/
 
 
-#define REGISTERS_VALUES     3
-#define CONVERSION_DATA      4
+/****************************** Global Data ***********************************/
+/****************************** Internal types *********************************/
 
-#define YES       1
-#define NO        0
+/* Number of received bytes */
+typedef enum {
+   ONE_BYTE = 1,                 /* Read one byte */
+   TWO_BYTES                /* Read two bytes */
+} enReadBytes;
 
-#define CHANNELS  3
 
-#define V_REF                3150.0    // [mV]
-#define _2_16                65535.0   // 2^16
+/*************************** Functions prototypes *****************************/
 
-extern void CN0397_Init(void);
-extern void CN0397_DisplayData(void);
-extern void CN0397_ReadADCData(uint8_t adcChannel, uint16_t *adcData);
-extern void CN0397_ConvertToVoltage(uint16_t adcValue, float *voltage);
-extern void CN0397_CalcLightIntensity(uint8_t channel, uint16_t adcValue, float *intensity);
-extern void CN0397_CalcLightConcentration(uint8_t channel, float intensity, float *conc);
-extern void CN0397_SetAppData(uint8_t channel);
-extern void CN0397_Calibration(uint8_t channel);
-extern void CN0397_SetBar(float conc, int *line);
+extern void spi_sensor_write(uint8_t byteCount, uint8_t *rec_msg);
+extern void spi_sensor_read(uint8_t byteCount, uint8_t *rec_msg);
 
-extern void CN0397_ReadCData(uint16_t *red_sensor, uint16_t *green_sensor, uint16_t *blue_sensor);
+extern uint8_t convFlag;
 
-/* Available settings:
- *  AD7798_GAIN_1, AD7798_GAIN_2,
- *  AD7798_GAIN_4, AD7798_GAIN_8,
- *  AD7798_GAIN_16, AD7798_GAIN_32,
- *  AD7798_GAIN_64, AD7798_GAIN_128
- */
-#define ADC_GAIN      AD7798_GAIN_1
-/* Available settings:
- * Check available value from datasheet
- */
-#define ADC_SPS        0x05  //50SPS
-
-/* Available settings:
- * How often to display output values on terminal -> msec
- */
-#define DISPLAY_REFRESH        500   //[msec]
-
-#define USE_CALIBRATION   YES    // Set YES if you want to use system zero-scale calibration before reading the system data; otherwise set NO.
+/**************************** Configuration parameters **********************/
+//* CSAD7798 - 0.3 - output */
+#define CS_1        WICED_P15
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* CN0397_H_ */
+#endif /* _COMMUNICATION_H_ */
