@@ -40,7 +40,7 @@ CY_RECIPE_EXTRA_LIBS+=-lgcc
 #
 # Basic Configuration
 #
-APPNAME=EmptyWicedBluetooth
+APPNAME=CN0397_ADI_RGB_Sensor
 TOOLCHAIN=GCC_ARM
 CONFIG=Debug
 VERBOSE=

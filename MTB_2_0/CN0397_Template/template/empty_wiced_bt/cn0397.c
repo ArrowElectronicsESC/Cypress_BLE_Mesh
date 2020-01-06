@@ -52,7 +52,7 @@
 #include "wiced_rtos.h"
 #include "wiced_platform.h"
 
-uint8_t button_state = 1;
+extern uint8_t button_state = 1;
 
 
 uint8_t statusReg, idReg, ioReg, gainAdc;

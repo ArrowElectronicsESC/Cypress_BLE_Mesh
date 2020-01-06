@@ -54,7 +54,7 @@
 #include <math.h>
 
 
-#define	CALIBRATE	0
+#define	CALIBRATE	1
 
 /*SPI 1 defines*/
 #define CLK_1                                 WICED_P09
@@ -213,7 +213,7 @@ void writeAd7791 (uint8_t ui8address, uint8_t ui8value)
 
 	else
 	{
-		spi_sensor_write(4, &reset_command);
+		spi_sensor_write(4, reset_command);
 
 		WICED_BT_TRACE(" Reset Command \r\n");			//Debug serial prints
 	}
