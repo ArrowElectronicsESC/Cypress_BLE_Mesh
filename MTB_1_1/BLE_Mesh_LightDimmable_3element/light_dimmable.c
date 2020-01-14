@@ -257,7 +257,7 @@ void mesh_app_init(wiced_bool_t is_provisioned)
     extern uint8_t wiced_bt_mesh_model_trace_enabled;
     wiced_bt_mesh_model_trace_enabled = WICED_TRUE;
 #endif
-    wiced_bt_cfg_settings.device_name = (uint8_t *)"MFR RGB Lights";
+    wiced_bt_cfg_settings.device_name = (uint8_t *)"MTB 2.0 RGB Lights";
     wiced_bt_cfg_settings.gatt_cfg.appearance = APPEARANCE_LIGHT_CEILING;
 
     mesh_prop_fw_version[0] = 0x30 + (WICED_SDK_MAJOR_VER / 10);
