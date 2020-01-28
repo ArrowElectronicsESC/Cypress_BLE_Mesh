@@ -30,3 +30,30 @@ Note
 
 
 -------------------------------------------------------------------------------
+
+Example Code 
+
+TODO #1
+
+Initialize Debug UART
+
+	wiced_set_debug_uart( WICED_ROUTE_DEBUG_TO_PUART );
+	WICED_BT_TRACE("**** CYW20819 App Start **** \n\r");
+
+TODO #2
+
+Toggle LED and Print LED State
+
+
+    	if( GPIO_PIN_OUTPUT_HIGH == wiced_hal_gpio_get_pin_output( WICED_GPIO_PIN_LED_1 ) )
+    	{
+    		wiced_hal_gpio_set_pin_output( WICED_GPIO_PIN_LED_1, GPIO_PIN_OUTPUT_LOW );
+    		WICED_BT_TRACE( "LED ON\r\n" );
+    	}
+    	else
+    	{
+    		wiced_hal_gpio_set_pin_output( WICED_GPIO_PIN_LED_1, GPIO_PIN_OUTPUT_HIGH );
+    		WICED_BT_TRACE( "LED OFF\r\n" );
+		}
+			
+	
