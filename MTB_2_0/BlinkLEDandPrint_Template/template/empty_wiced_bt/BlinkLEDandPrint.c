@@ -32,7 +32,9 @@ void app_task(uint32_t );
 ********************************************************************************/
 void application_start(void)
 {
-	/* TODO: Enter Debug Port initialization code here */
+	/* TODO #1: Enter Debug Port initialization code here */
+
+
 
     /* Initialize Stack and Register Management Callback */
     wiced_bt_stack_init( app_bt_management_callback, &wiced_bt_cfg_settings, wiced_bt_cfg_buf_pools );
@@ -93,7 +95,7 @@ void app_task( uint32_t arg )
 {
     while( 1 )
     {
-	/*** TODO #1: Enter LED Toogle Code and State Print Here ***/
+	/*** TODO #2: Enter LED Toogle Code and State Print Here ***/
 		
         /* Send the thread to sleep for a specified number of milliseconds */
         wiced_rtos_delay_milliseconds( SLEEP_250MS, ALLOW_THREAD_TO_SLEEP );
