@@ -1,5 +1,5 @@
 #
-# Copyright 2019, Cypress Semiconductor Corporation or a subsidiary of
+# Copyright 2020, Cypress Semiconductor Corporation or a subsidiary of
 # Cypress Semiconductor Corporation. All Rights Reserved.
 #
 # This software, including source code, documentation and related
@@ -35,12 +35,10 @@ ifeq ($(WHICHFILE),true)
 $(info Processing $(lastword $(MAKEFILE_LIST)))
 endif
 
-CY_RECIPE_EXTRA_LIBS+=-lgcc  
-
 #
 # Basic Configuration
 #
-APPNAME=CN0397_ADI_RGB_Sensor
+APPNAME=CN0397
 TOOLCHAIN=GCC_ARM
 CONFIG=Debug
 VERBOSE=
@@ -49,21 +47,25 @@ VERBOSE=
 TARGET=CYW920819EVB-02
 SUPPORTED_TARGETS = \
   CYW920819EVB-02 \
+  CYBT-213043-MESH \
   CYW920820EVB-02 \
   CYBT-213043-EVAL \
-  CYW989820EVB-01 \
   CYW920721B2EVK-01 \
   CYW920721B2EVK-03 \
-  CYW920719B2Q40EVB-01
+  CYW920721B2EVK-02 \
+  CYW920719B2Q40EVB-01 \
+  CYW920706WCDEVAL
 
 TARGET_DEVICE_MAP = \
   CYW920819EVB-02/20819A1 \
+  CYBT-213043-MESH/20819A1 \
   CYW920820EVB-02/20820A1 \
   CYBT-213043-EVAL/20819A1 \
-  CYW989820EVB-01/20820A1 \
   CYW920721B2EVK-01/20721B2 \
   CYW920721B2EVK-03/20721B2 \
-  CYW920719B2Q40EVB-01/20719B2
+  CYW920721B2EVK-02/20721B2 \
+  CYW920719B2Q40EVB-01/20719B2 \
+  CYW920706WCDEVAL/20706A2
 
 CY_TARGET_DEVICE = $(patsubst $(TARGET)/%,%,$(filter $(TARGET)%,$(TARGET_DEVICE_MAP)))
 
@@ -98,25 +100,78 @@ FEATURES=
 #
 # App features/defaults
 #
-OTA_FW_UPGRADE?=0
-BT_DEVICE_ADDRESS?=default
+OTA_FW_UPGRADE?=1
 UART?=AUTO
 XIP?=xip
 TRANSPORT?=UART
-ENABLE_DEBUG?=0
+export ENABLE_DEBUG?=0
 
 # wait for SWD attach
 ifeq ($(ENABLE_DEBUG),1)
 CY_APP_DEFINES+=-DENABLE_DEBUG=1
 endif
+REMOTE_PROVISION_SRV?=0
 
 CY_APP_DEFINES+=\
-    -DWICED_BT_TRACE_ENABLE
+    -DWICED_BT_TRACE_ENABLE \
+    -DHCI_CONTROL
+
+ifeq ($(REMOTE_PROVISION_SRV),1)
+CY_APP_DEFINES += -DREMOTE_PROVISION_SERVER_SUPPORTED
+endif
+
+# value of the LOW_POWER_NODE defines mode. It can be normal node (0), or low power node (1)
+LOW_POWER_NODE ?= 0
+CY_APP_DEFINES += -DLOW_POWER_NODE=$(LOW_POWER_NODE)
+
+# If PTS is defined then device gets hardcoded BD address from make target
+# Otherwise it is random for all mesh apps.
+# Do not try to use BT_DEVICE_ADDRESS unless testing with PTS=1
+BT_DEVICE_ADDRESS?=default
+PTS ?= 0
+ifeq ($(PTS),1)
+CY_APP_DEFINES += -DPTS
+endif # PTS
+
+# These flags control whether the prebuilt mesh libs (core, models)
+# will be the trace enabled versions or not
+MESH_MODELS_DEBUG_TRACES ?= 0
+MESH_CORE_DEBUG_TRACES ?= 0
+
+ifeq ($(CY_TARGET_DEVICE), 20706A2)
+# 20706 devices may only have 0 or 1 mesh debug lib linked, disallow multiple
+MESH_DEBUG_LIB_LIST:=$(filter 1,$(MESH_CORE_DEBUG_TRACES) $(MESH_MODELS_DEBUG_TRACES) $(MESH_PROVISIONER_DEBUG_TRACES))
+ifneq ($(filter $(words $(MESH_DEBUG_LIB_LIST)), 0 1),$(words $(MESH_DEBUG_LIB_LIST)))
+$(info MESH_CORE_DEBUG_TRACES=$(MESH_CORE_DEBUG_TRACES) MESH_MODELS_DEBUG_TRACES=$(MESH_MODELS_DEBUG_TRACES) MESH_PROVISIONER_DEBUG_TRACES=$(MESH_PROVISIONER_DEBUG_TRACES))
+$(error $(TARGET) only supports linking 1 mesh debug library at a time)
+endif
+endif
 
 #
 # Components (middleware libraries)
 #
 COMPONENTS +=bsp_design_modus
+COMPONENTS += mesh_app_lib
+ifeq ($(OTA_FW_UPGRADE),1)
+COMPONENTS += fw_upgrade_lib
+endif
+
+# prebuilt libs - link release libs by default, or debug trace enabled if flag set
+ifeq ($(MESH_CORE_DEBUG_TRACES),1)
+COMPONENTS += mesh_core_lib_debug
+else
+COMPONENTS += mesh_core_lib
+endif
+ifeq ($(MESH_MODELS_DEBUG_TRACES),1)
+COMPONENTS += mesh_models_lib_debug
+else
+COMPONENTS += mesh_models_lib
+endif
+
+ifeq ($(CY_TARGET_DEVICE),20706A2)
+CY_APP_PATCH_LIBS += rtc_lib.a
+CY_APP_PATCH_LIBS += wiced_bt_mesh.a
+endif
 
 ################################################################################
 # Paths
@@ -126,7 +181,7 @@ COMPONENTS +=bsp_design_modus
 CY_APP_PATH=.
 
 # Path (absolute or relative) to the bt-sdk folder (at repo root)
-CY_SHARED_PATH=$(CY_APP_PATH)/../../../wiced_btsdk
+CY_SHARED_PATH=$(CY_APP_PATH)/../wiced_btsdk
 
 # Path (absolute or relative) to the base library
 CY_BASELIB_PATH=$(CY_SHARED_PATH)/dev-kit/baselib/$(CY_TARGET_DEVICE)
@@ -168,13 +223,16 @@ endif
 CY_WICED_TOOLS_ROOT?=$(CY_SHARED_PATH)/dev-kit/btsdk-tools
 
 # tools that can be launched with "make open CY_OPEN_TYPE=<tool>
-CY_BT_APP_TOOLS=BTSpy ClientControl
+CY_BT_APP_TOOLS=BTSpy ClientControlMesh
 
 # getlibs path
 CY_GETLIBS_PATH=.
 
 # paths to shared_libs targets
-SEARCH_LIBS_AND_INCLUDES=$(CY_BSP_PATH) $(CY_BASELIB_PATH)
+SEARCH_LIBS_AND_INCLUDES=$(CY_BSP_PATH) $(CY_BASELIB_PATH) $(CY_SHARED_PATH)/dev-kit/libraries/btsdk-mesh $(CY_SHARED_PATH)/dev-kit/libraries/btsdk-drivers
+ifeq ($(OTA_FW_UPGRADE),1)
+SEARCH_LIBS_AND_INCLUDES+=$(CY_SHARED_PATH)/dev-kit/libraries/btsdk-ota
+endif
 
 # common make arguments for lib builds
 MAKE_OVERRIDES=OTA_FW_UPGRADE=$(OTA_FW_UPGRADE)
